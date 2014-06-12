@@ -1,0 +1,25 @@
+{
+  "name": "bobv/entity-history-bundle",
+  "keywords": ["persistence", "doctrine", "database", "history", "symfony"],
+  "type": "symfony-bundle",
+  "description": "History for Doctrine Entities",
+  "homepage": "http://github.com/bobvandevijver/latex-bundle",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Bob van de Vijver",
+      "email": "bobvandevijver@hotmail.com"
+    }
+  ],
+  "require": {
+    "doctrine/orm": "~2.1",
+    "symfony/framework-bundle": "~2.0"
+  },
+  "target-dir": "BobV/EntityHistoryBundle",
+  "autoload": {
+    "psr-0": {
+      "BobV\\LatexBundle": ""
+    }
+  }
+}
+
