@@ -4,11 +4,18 @@ namespace BobV\EntityHistoryBundle\EventSubscriber;
 
 use BobV\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\Common\EventSubscriber;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Mapping\AnsiQuoteStrategy;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\DefaultQuoteStrategy;
+use Doctrine\ORM\UnitOfWork;
 
 /**
  * Class LogHistorySubscriber
@@ -28,11 +35,11 @@ class LogHistorySubscriber implements EventSubscriber
    */
   private $config;
   /**
-   * @var \Doctrine\DBAL\Connection
+   * @var Connection
    */
   private $conn;
   /**
-   * @var \Doctrine\ORM\EntityManager
+   * @var EntityManager
    */
   private $em;
   /**
@@ -40,11 +47,11 @@ class LogHistorySubscriber implements EventSubscriber
    */
   private $insertRevisionSQL = array();
   /**
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
+   * @var AbstractPlatform
    */
   private $platform;
   /**
-   * @var \Doctrine\ORM\UnitOfWork
+   * @var UnitOfWork
    */
   private $uow;
 
@@ -100,6 +107,9 @@ class LogHistorySubscriber implements EventSubscriber
     $this->saveRevisionEntityData($class, $this->getOriginalEntityData($entity), 'INS');
   }
 
+  /**
+   * @param LifecycleEventArgs $eventArgs
+   */
   public function postUpdate(LifecycleEventArgs $eventArgs)
   {
     // onFlush was executed before, everything already initialized
@@ -114,6 +124,12 @@ class LogHistorySubscriber implements EventSubscriber
     $this->saveRevisionEntityData($class, $entityData, 'UPD');
   }
 
+  /**
+   * @param ClassMetadata $class
+   *
+   * @return string
+   * @throws DBALException
+   */
   private function getInsertRevisionSQL($class)
   {
     if (!isset($this->insertRevisionSQL[$class->name])) {
@@ -145,7 +161,7 @@ class LogHistorySubscriber implements EventSubscriber
         $placeholders[] = (!empty($class->fieldMappings[$field]['requireSQLConversion']))
             ? $type->convertToDatabaseValueSQL('?', $this->platform)
             : '?';
-        $sql .= ', ' . $class->getQuotedColumnName($field, $this->platform);
+        $sql .= ', ' . $this->em->getConfiguration()->getQuoteStrategy()->getColumnName($field, $class, $this->platform);
       }
 
       $sql .= ") VALUES (" . implode(", ", $placeholders) . ")";
@@ -230,8 +246,8 @@ class LogHistorySubscriber implements EventSubscriber
 
     foreach ($class->associationMappings AS $field => $assoc) {
       if (($assoc['type'] & ClassMetadata::TO_ONE) > 0 && $assoc['isOwningSide']) {
-        $targetClass = $this->em->getClassMetadata($assoc['targetEntity']);
 
+        $relatedId = NULL;
         if ($entityData[$field] !== NULL) {
           $relatedId = $this->uow->getEntityIdentifier($entityData[$field]);
         }

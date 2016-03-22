@@ -4,6 +4,7 @@ namespace BobV\EntityHistoryBundle\EventSubscriber;
 
 use BobV\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\Common\EventSubscriber;
+use Doctrine\DBAL\Schema\Column;
 use Doctrine\ORM\Tools\Event\GenerateSchemaTableEventArgs;
 use Doctrine\ORM\Tools\ToolEvents;
 
