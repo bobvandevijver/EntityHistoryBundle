@@ -86,7 +86,25 @@ class LogHistorySubscriber implements EventSubscriber
       if (!$this->config->isLogged($class->name)) {
         continue;
       }
+
+      // Get the original data
       $entityData = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
+
+      // Check if there is a deletedAt field configured which we can set
+      if(null !== ($deletedAtField = $this->config->getDeletedAtField())){
+        $deletedAtValue = [];
+        $deletedAtValue[$deletedAtField] = new \DateTime();
+        $entityData = array_merge($entityData, $deletedAtValue);
+      }
+
+      // Check if there is a deletedBy field configured which we can set
+      if(null !== ($deletedByField = $this->config->getDeletedByField())){
+        $deletedByValue = [];
+        $deletedByValue[$deletedByField] = $this->config->getDeletedByValue();
+        $entityData = array_merge($entityData, $deletedByValue);
+      }
+
+      // Save the update
       $this->saveRevisionEntityData($class, $entityData, 'DEL');
     }
   }

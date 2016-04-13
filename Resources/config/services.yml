@@ -8,17 +8,21 @@ parameters:
 services:
   bobv.entityhistory.configuration:
     class: BobV\EntityHistoryBundle\Configuration\HistoryConfiguration
+    arguments:
+      - "@service_container"
     calls:
-      - [injectVars, [ "%bobv.entityhistory.table_prefix%", "%bobv.entityhistory.table_suffix%", "%bobv.entityhistory.revision_field_name%", "%bobv.entityhistory.revision_type_field_name%", "%bobv.entityhistory.entities%" ]]
+      - [injectVars, [ "%bobv.entityhistory.table_prefix%", "%bobv.entityhistory.table_suffix%", "%bobv.entityhistory.revision_field_name%", "%bobv.entityhistory.revision_type_field_name%", "%bobv.entityhistory.entities%", "%bobv.entityhistory.deleted_at_field%", "%bobv.entityhistory.deleted_by_field%", "%bobv.entityhistory.deleted_by_method%" ]]
 
   bobv.entityhistory.create_schema_subscriber:
     class: BobV\EntityHistoryBundle\EventSubscriber\CreateSchemaSubscriber
-    arguments: [ "@bobv.entityhistory.configuration" ]
+    arguments:
+      - "@bobv.entityhistory.configuration"
     tags:
       - { name: doctrine.event_subscriber, connection: default }
 
   bobv.entityhistory.log_history_subscriber:
     class: BobV\EntityHistoryBundle\EventSubscriber\LogHistorySubscriber
-    arguments: [ "@bobv.entityhistory.configuration" ]
+    arguments:
+      - "@bobv.entityhistory.configuration"
     tags:
       - { name: doctrine.event_subscriber, connection: default }

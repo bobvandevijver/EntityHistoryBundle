@@ -32,6 +32,9 @@ class BobVEntityHistoryExtension extends Extension
         'revision_field_name',
         'revision_type_field_name',
         'entities',
+        'deleted_at_field',
+        'deleted_by_field',
+        'deleted_by_method',
     );
 
     foreach ($configurables as $key) {

@@ -39,6 +39,15 @@ class Configuration implements ConfigurationInterface
         ->scalarNode('revision_type_field_name')
           ->defaultValue('revtype')
           ->end()
+        ->scalarNode('deleted_at_field')
+          ->defaultValue(NULL)
+          ->end()
+        ->scalarNode('deleted_by_field')
+          ->defaultValue(NULL)
+          ->end()
+        ->scalarNode('deleted_by_method')
+          ->defaultValue(NULL)
+          ->end()
         ->end();
 
     return $builder;

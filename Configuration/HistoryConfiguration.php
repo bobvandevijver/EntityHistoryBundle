@@ -2,6 +2,8 @@
 
 namespace BobV\EntityHistoryBundle\Configuration;
 
+use Symfony\Component\DependencyInjection\ContainerInterface;
+
 /**
  * Class HistoryConfiguration
  *
@@ -19,64 +21,122 @@ class HistoryConfiguration
   protected $revisionFieldName;
   protected $revisionTypeFieldName;
   protected $suffix;
+  protected $deletedAtField;
+  protected $deletedByField;
+  protected $deletedByMethod;
+
+  /**
+   * @var ContainerInterface
+   */
+  private $container;
+
+  /**
+   * HistoryConfiguration constructor.
+   *
+   * @param ContainerInterface $container
+   */
+  public function __construct(ContainerInterface $container) {
+    $this->container = $container;
+  }
 
   /**
    * @return mixed
    */
-  public function getClasses()
-  {
+  public function getClasses() {
     return $this->classes;
   }
 
   /**
    * @return mixed
    */
-  public function getPrefix()
-  {
+  public function getPrefix() {
     return $this->prefix;
   }
 
   /**
    * @return mixed
    */
-  public function getRevisionFieldName()
-  {
+  public function getRevisionFieldName() {
     return $this->revisionFieldName;
   }
 
   /**
    * @return mixed
    */
-  public function getRevisionTypeFieldName()
-  {
+  public function getRevisionTypeFieldName() {
     return $this->revisionTypeFieldName;
   }
 
   /**
    * @return mixed
    */
-  public function getSuffix()
-  {
+  public function getSuffix() {
     return $this->suffix;
   }
 
-  public function getTableName($class)
-  {
+  /**
+   * @param $class
+   *
+   * @return string
+   */
+  public function getTableName($class) {
     return $this->prefix . $class . $this->suffix;
   }
 
-  public function injectVars($prefix, $suffix, $revFieldName, $revTypeFieldName, $classes)
-  {
+  /**
+   * @param $prefix
+   * @param $suffix
+   * @param $revFieldName
+   * @param $revTypeFieldName
+   * @param $classes
+   * @param $deletedAtField
+   * @param $deletedByField
+   * @param $deletedByMethod
+   */
+  public function injectVars($prefix, $suffix, $revFieldName, $revTypeFieldName, $classes, $deletedAtField, $deletedByField, $deletedByMethod) {
     $this->prefix                = $prefix;
     $this->suffix                = $suffix;
     $this->revisionFieldName     = $revFieldName;
     $this->revisionTypeFieldName = $revTypeFieldName;
     $this->classes               = array_flip($classes);
+    $this->deletedAtField        = $deletedAtField;
+    $this->deletedByField        = $deletedByField;
+    $this->deletedByMethod       = $deletedByMethod;
   }
 
-  public function isLogged($entityName)
-  {
+  /**
+   * @param $entityName
+   *
+   * @return mixed
+   */
+  public function isLogged($entityName) {
     return array_key_exists($entityName, $this->classes);
+  }
+
+  /**
+   * @return mixed
+   */
+  public function getDeletedAtField() {
+    return $this->deletedAtField;
+  }
+
+  /**
+   * @return mixed
+   */
+  public function getDeletedByField() {
+    return $this->deletedByField;
+  }
+
+  /**
+   * @return mixed
+   */
+  public function getDeletedByValue() {
+    $method = $this->deletedByMethod;
+    try {
+      return $this->container->get('security.authorization_checker')->$method();
+    } catch (\Exception $e) {
+      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->authorizationChecker)));
+    }
   }
 
 }
