@@ -12,14 +12,12 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
-use Doctrine\ORM\Mapping\AnsiQuoteStrategy;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\DefaultQuoteStrategy;
 use Doctrine\ORM\UnitOfWork;
 
 /**
  * Class LogHistorySubscriber
- * 
+ *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -58,24 +56,21 @@ class LogHistorySubscriber implements EventSubscriber
   /**
    * @param HistoryConfiguration $history
    */
-  public function __construct(HistoryConfiguration $history)
-  {
+  public function __construct(HistoryConfiguration $history) {
     $this->config = $history;
   }
 
   /**
    * @return array
    */
-  public function getSubscribedEvents()
-  {
+  public function getSubscribedEvents() {
     return array(Events::onFlush, Events::postPersist, Events::postUpdate);
   }
 
   /**
    * @param OnFlushEventArgs $eventArgs
    */
-  public function onFlush(OnFlushEventArgs $eventArgs)
-  {
+  public function onFlush(OnFlushEventArgs $eventArgs) {
     $this->em       = $eventArgs->getEntityManager();
     $this->conn     = $this->em->getConnection();
     $this->uow      = $this->em->getUnitOfWork();
@@ -91,17 +86,17 @@ class LogHistorySubscriber implements EventSubscriber
       $entityData = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
 
       // Check if there is a deletedAt field configured which we can set
-      if(null !== ($deletedAtField = $this->config->getDeletedAtField())){
-        $deletedAtValue = [];
+      if (null !== ($deletedAtField = $this->config->getDeletedAtField())) {
+        $deletedAtValue                  = [];
         $deletedAtValue[$deletedAtField] = new \DateTime();
-        $entityData = array_merge($entityData, $deletedAtValue);
+        $entityData                      = array_merge($entityData, $deletedAtValue);
       }
 
       // Check if there is a deletedBy field configured which we can set
-      if(null !== ($deletedByField = $this->config->getDeletedByField())){
-        $deletedByValue = [];
+      if (null !== ($deletedByField = $this->config->getDeletedByField())) {
+        $deletedByValue                  = [];
         $deletedByValue[$deletedByField] = $this->config->getDeletedByValue();
-        $entityData = array_merge($entityData, $deletedByValue);
+        $entityData                      = array_merge($entityData, $deletedByValue);
       }
 
       // Save the update
@@ -112,8 +107,7 @@ class LogHistorySubscriber implements EventSubscriber
   /**
    * @param LifecycleEventArgs $eventArgs
    */
-  public function postPersist(LifecycleEventArgs $eventArgs)
-  {
+  public function postPersist(LifecycleEventArgs $eventArgs) {
     // onFlush was executed before, everything already initialized
     $entity = $eventArgs->getEntity();
 
@@ -128,8 +122,7 @@ class LogHistorySubscriber implements EventSubscriber
   /**
    * @param LifecycleEventArgs $eventArgs
    */
-  public function postUpdate(LifecycleEventArgs $eventArgs)
-  {
+  public function postUpdate(LifecycleEventArgs $eventArgs) {
     // onFlush was executed before, everything already initialized
     $entity = $eventArgs->getEntity();
 
@@ -138,8 +131,13 @@ class LogHistorySubscriber implements EventSubscriber
       return;
     }
 
-    $entityData = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
-    $this->saveRevisionEntityData($class, $entityData, 'UPD');
+    $entityData         = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
+    // Check if the deleted field was set before, if so, it if and REVERT
+    if ($this->config->isReverted($class->name, $entityData['id'])) {
+      $this->saveRevisionEntityData($class, $entityData, 'REV');
+    } else {
+      $this->saveRevisionEntityData($class, $entityData, 'UPD');
+    }
   }
 
   /**
@@ -148,8 +146,7 @@ class LogHistorySubscriber implements EventSubscriber
    * @return string
    * @throws DBALException
    */
-  private function getInsertRevisionSQL($class)
-  {
+  private function getInsertRevisionSQL($class) {
     if (!isset($this->insertRevisionSQL[$class->name])) {
       $placeholders = array('?', '?');
       $tableName    = $this->config->getTableName($class->table['name']);
@@ -196,8 +193,7 @@ class LogHistorySubscriber implements EventSubscriber
    *
    * @return array
    */
-  private function getOriginalEntityData($entity)
-  {
+  private function getOriginalEntityData($entity) {
     $class = $this->em->getClassMetadata(get_class($entity));
     $data  = $this->uow->getOriginalEntityData($entity);
     if ($class->isVersioned) {
@@ -211,10 +207,14 @@ class LogHistorySubscriber implements EventSubscriber
   /**
    * Find the new revision id for the current entity
    *
+   * @param ClassMetadata $class
+   * @param               $entityData
+   * @param               $revType
+   *
    * @return int|string
+   * @throws DBALException
    */
-  private function getRevisionId(ClassMetadata $class, $entityData, $revType)
-  {
+  private function getRevisionId(ClassMetadata $class, $entityData, $revType) {
     if ($revType === "INS") {
       return 1;
     }
@@ -255,8 +255,7 @@ class LogHistorySubscriber implements EventSubscriber
    * @param array         $entityData
    * @param string        $revType
    */
-  private function saveRevisionEntityData($class, $entityData, $revType)
-  {
+  private function saveRevisionEntityData($class, $entityData, $revType) {
     $params = array($this->getRevisionId($class, $entityData, $revType), $revType);
     $types  = array(\PDO::PARAM_INT, \PDO::PARAM_STR);
 

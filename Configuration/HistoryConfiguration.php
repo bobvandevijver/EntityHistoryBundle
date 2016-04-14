@@ -16,6 +16,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class HistoryConfiguration
 {
+
+  // Configuration variables
   protected $classes;
   protected $prefix;
   protected $revisionFieldName;
@@ -29,6 +31,11 @@ class HistoryConfiguration
    * @var ContainerInterface
    */
   private $container;
+
+  /**
+   * @var array
+   */
+  private $changes = array();
 
   /**
    * HistoryConfiguration constructor.
@@ -135,8 +142,34 @@ class HistoryConfiguration
     try {
       return $this->container->get('security.authorization_checker')->$method();
     } catch (\Exception $e) {
-      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->authorizationChecker)));
+      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->container->get('security.authorization_checker'))));
     }
+  }
+
+  /**
+   * @param $className
+   * @param $id
+   *
+   * @return bool
+   */
+  public function isReverted($className, $id) {
+    if (isset($this->changes[$className]) && in_array($id, $this->changes[$className])) {
+      unset($this->changes[$className][$id]);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * @param $className
+   * @param $id
+   */
+  public function setReverted($className, $id) {
+    if (!isset($this->changes[$className])) {
+      $this->changes[$className] = [];
+    }
+    $this->changes[$className][] = $id;
   }
 
 }
