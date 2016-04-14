@@ -26,3 +26,10 @@ services:
       - "@bobv.entityhistory.configuration"
     tags:
       - { name: doctrine.event_subscriber, connection: default }
+
+  bobv.entitybundle.history_reader:
+    class: BobV\EntityHistoryBundle\Reader\HistoryReader
+    lazy: true
+    arguments:
+      - "@doctrine.orm.entity_manager"
+      - "@bobv.entityhistory.configuration"
