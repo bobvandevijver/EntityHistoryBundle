@@ -28,7 +28,6 @@ $RECYCLE.BIN/
 # Icon must ends with two \r.
 Icon
 
-
 # Thumbnails
 ._*
 
@@ -52,3 +51,6 @@ app/config/parameters.yml
 
 # Composer
 composer.phar
+
+# Phpstorm directory
+.idea
