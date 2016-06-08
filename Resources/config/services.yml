@@ -17,15 +17,11 @@ services:
     class: BobV\EntityHistoryBundle\EventSubscriber\CreateSchemaSubscriber
     arguments:
       - "@bobv.entityhistory.configuration"
-    tags:
-      - { name: doctrine.event_subscriber, connection: default }
 
   bobv.entityhistory.log_history_subscriber:
     class: BobV\EntityHistoryBundle\EventSubscriber\LogHistorySubscriber
     arguments:
       - "@bobv.entityhistory.configuration"
-    tags:
-      - { name: doctrine.event_subscriber, connection: default }
 
   bobv.entitybundle.history_reader:
     class: BobV\EntityHistoryBundle\Reader\HistoryReader

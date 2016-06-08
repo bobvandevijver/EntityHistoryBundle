@@ -19,8 +19,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  */
 class BobVEntityHistoryExtension extends Extension
 {
-  public function load(array $configs, ContainerBuilder $container)
-  {
+  public function load(array $configs, ContainerBuilder $container) {
     $config = $this->processConfiguration(new Configuration(), $configs);
 
     $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
@@ -39,6 +38,14 @@ class BobVEntityHistoryExtension extends Extension
 
     foreach ($configurables as $key) {
       $container->setParameter("bobv.entityhistory." . $key, $config[$key]);
+    }
+
+    // Create the service tags
+    foreach ($config['connections'] as $connection) {
+      $container->getDefinition('bobv.entityhistory.create_schema_subscriber')
+          ->addTag('doctrine.event_subscriber', array('connection' => $connection));
+      $container->getDefinition('bobv.entityhistory.log_history_subscriber')
+          ->addTag('doctrine.event_subscriber', array('connection' => $connection));
     }
 
   }
