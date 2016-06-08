@@ -3,7 +3,7 @@
   "keywords": ["persistence", "doctrine", "database", "history", "symfony"],
   "type": "symfony-bundle",
   "description": "History for Doctrine Entities",
-  "homepage": "http://github.com/bobvandevijver/latex-bundle",
+  "homepage": "http://github.com/bobvandevijver/EntityHistoryBundle",
   "license": "MIT",
   "authors": [
     {
