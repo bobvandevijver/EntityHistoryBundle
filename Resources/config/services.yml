@@ -6,26 +6,34 @@ parameters:
   bobv.entityhistory.entities: {}
 
 services:
-  bobv.entityhistory.configuration:
-    class: BobV\EntityHistoryBundle\Configuration\HistoryConfiguration
+  BobV\EntityHistoryBundle\Configuration\HistoryConfiguration:
     arguments:
       - "@service_container"
     calls:
       - [injectVars, [ "%bobv.entityhistory.table_prefix%", "%bobv.entityhistory.table_suffix%", "%bobv.entityhistory.revision_field_name%", "%bobv.entityhistory.revision_type_field_name%", "%bobv.entityhistory.entities%", "%bobv.entityhistory.deleted_at_field%", "%bobv.entityhistory.deleted_by_field%", "%bobv.entityhistory.deleted_by_method%" ]]
 
+  bobv.entityhistory.configuration:
+    alias: BobV\EntityHistoryBundle\Configuration\HistoryConfiguration
+
+  BobV\EntityHistoryBundle\EventSubscriber\CreateSchemaSubscriber:
+    arguments:
+      - "@bobv.entityhistory.configuration"
+
   bobv.entityhistory.create_schema_subscriber:
-    class: BobV\EntityHistoryBundle\EventSubscriber\CreateSchemaSubscriber
+    alias: BobV\EntityHistoryBundle\EventSubscriber\CreateSchemaSubscriber
+
+  BobV\EntityHistoryBundle\EventSubscriber\LogHistorySubscriber:
     arguments:
       - "@bobv.entityhistory.configuration"
 
   bobv.entityhistory.log_history_subscriber:
-    class: BobV\EntityHistoryBundle\EventSubscriber\LogHistorySubscriber
-    arguments:
-      - "@bobv.entityhistory.configuration"
+    alias: BobV\EntityHistoryBundle\EventSubscriber\LogHistorySubscriber
 
-  bobv.entitybundle.history_reader:
-    class: BobV\EntityHistoryBundle\Reader\HistoryReader
+  BobV\EntityHistoryBundle\Reader\HistoryReader:
     lazy: true
     arguments:
       - "@doctrine.orm.entity_manager"
       - "@bobv.entityhistory.configuration"
+
+  bobv.entitybundle.history_reader:
+    alias: BobV\EntityHistoryBundle\Reader\HistoryReader

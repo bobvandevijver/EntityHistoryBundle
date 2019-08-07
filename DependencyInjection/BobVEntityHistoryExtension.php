@@ -42,9 +42,9 @@ class BobVEntityHistoryExtension extends Extension
 
     // Create the service tags
     foreach ($config['connections'] as $connection) {
-      $container->getDefinition('bobv.entityhistory.create_schema_subscriber')
+      $container->findDefinition('bobv.entityhistory.create_schema_subscriber')
           ->addTag('doctrine.event_subscriber', array('connection' => $connection));
-      $container->getDefinition('bobv.entityhistory.log_history_subscriber')
+      $container->findDefinition('bobv.entityhistory.log_history_subscriber')
           ->addTag('doctrine.event_subscriber', array('connection' => $connection));
     }
 
