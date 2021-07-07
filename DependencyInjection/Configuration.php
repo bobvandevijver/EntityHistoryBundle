@@ -19,8 +19,15 @@ class Configuration implements ConfigurationInterface
 {
   public function getConfigTreeBuilder()
   {
-    $builder = new TreeBuilder();
-    $builder->root('bobv_entity_history')
+    $treeBuilder = new TreeBuilder('bobv_entity_history');
+
+    if (method_exists($treeBuilder, 'getRootNode')) {
+      $rootNode = $treeBuilder->getRootNode();
+    } else {
+      // for symfony/config 4.1 and older
+      $rootNode = $treeBuilder->root('bobv_entity_history');
+    }
+    $rootNode
         ->children()
           ->arrayNode('entities')
             ->prototype('scalar')->end()
@@ -53,6 +60,6 @@ class Configuration implements ConfigurationInterface
             ->end()
         ->end();
 
-    return $builder;
+    return $treeBuilder;
   }
 }
