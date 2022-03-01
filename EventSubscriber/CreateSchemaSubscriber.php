@@ -68,7 +68,7 @@ class CreateSchemaSubscriber implements EventSubscriber
         /* @var $column Column */
         $column = $entityTable->getColumn('id');
         $revisionTable->addColumn($column->getName(), $column->getType()->getName(), array_merge(
-            $column->toArray(),
+            $this->getColumnOptions($column),
             array('notnull' => false, 'autoincrement' => false)
         ));
       }
@@ -82,7 +82,7 @@ class CreateSchemaSubscriber implements EventSubscriber
         if ($column->getName() == 'id') continue;
         /* @var $column Column */
         $revisionTable->addColumn($column->getName(), $column->getType()->getName(), array_merge(
-            $column->toArray(),
+            $this->getColumnOptions($column),
             array('notnull' => false, 'autoincrement' => false)
         ));
       }
@@ -92,5 +92,18 @@ class CreateSchemaSubscriber implements EventSubscriber
       $pkColumns[] = $this->config->getRevisionFieldName();
       $revisionTable->setPrimaryKey($pkColumns);
     }
+  }
+
+  /**
+   * Get all the options for a column, uses the toArray method and removes the keys that are not relevant
+   */
+  private function getColumnOptions(Column $column): array
+  {
+    $columnArray = $column->toArray();
+    unset($columnArray['name']);
+    unset($columnArray['type']);
+    unset($columnArray['version']);
+
+    return $columnArray;
   }
 }
