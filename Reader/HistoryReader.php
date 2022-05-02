@@ -67,7 +67,7 @@ class HistoryReader
     $query     = 'SELECT * FROM ' . $tableName . ' h WHERE h.id = ?';
 
     // Execute query
-    $revisions = $this->em->getConnection()->fetchAll($query, $id);
+    $revisions = $this->em->getConnection()->fetchAllAssociative($query, $id);
 
     // Create history revisions
     return $this->createHistoryCollection($className, $revisions);
@@ -93,7 +93,7 @@ class HistoryReader
     $query     = 'SELECT * FROM ' . $tableName . ' h WHERE h.id = ? AND h.rev = ?';
 
     // Execute query
-    $revisions = $this->em->getConnection()->fetchAll($query, array($id, $revision));
+    $revisions = $this->em->getConnection()->fetchAllAssociative($query, array($id, $revision));
 
     // Create history revisions
     $history = $this->createHistoryCollection($className, $revisions);
@@ -143,7 +143,7 @@ class HistoryReader
     $query     = 'SELECT * FROM ' . $tableName . ' h WHERE ' . $whereSql . " ORDER BY h.id DESC";
 
     // Execute query
-    $revisions = $this->em->getConnection()->fetchAll($query, array_values($criteria));
+    $revisions = $this->em->getConnection()->fetchAllAssociative($query, array_values($criteria));
 
     // Create history revisions
     return $this->createHistoryCollection($className, $revisions);

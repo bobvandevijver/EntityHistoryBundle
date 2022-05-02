@@ -242,7 +242,7 @@ class LogHistorySubscriber implements EventSubscriber
     $result = $this->conn->executeQuery($sql);
 
     if ($result->rowCount() == 1) {
-      return $result->fetch()[$this->config->getRevisionFieldName()] + 1;
+      return $result->fetchAssociative()[$this->config->getRevisionFieldName()] + 1;
     } elseif ($result->rowCount() > 1) {
       throw new \LogicException('Error while selecting new rev number');
     } else {
