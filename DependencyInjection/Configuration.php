@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\DependencyInjection;
+namespace Bobv\EntityHistoryBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;

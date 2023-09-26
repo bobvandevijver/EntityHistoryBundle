@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\Configuration;
+namespace Bobv\EntityHistoryBundle\Configuration;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 

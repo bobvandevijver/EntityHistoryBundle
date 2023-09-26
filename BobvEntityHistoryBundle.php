@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle;
+namespace Bobv\EntityHistoryBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  *
  * @author BobV
  */
-class BobVEntityHistoryBundle extends Bundle
+class BobvEntityHistoryBundle extends Bundle
 {
 
 }

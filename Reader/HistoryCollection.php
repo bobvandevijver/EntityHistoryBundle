@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\Reader;
+namespace Bobv\EntityHistoryBundle\Reader;
 
 /**
  * Class HistoryCollection
