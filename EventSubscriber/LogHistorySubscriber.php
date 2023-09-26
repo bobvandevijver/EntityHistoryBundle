@@ -1,8 +1,8 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\EventSubscriber;
+namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
-use BobV\EntityHistoryBundle\Configuration\HistoryConfiguration;
+use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;

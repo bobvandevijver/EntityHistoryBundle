@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\DependencyInjection;
+namespace Bobv\EntityHistoryBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  *
  * @author BobV
  */
-class BobVEntityHistoryExtension extends Extension
+class BobvEntityHistoryExtension extends Extension
 {
   public function load(array $configs, ContainerBuilder $container) {
     $config = $this->processConfiguration(new Configuration(), $configs);

@@ -1,12 +1,12 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\Reader;
+namespace Bobv\EntityHistoryBundle\Reader;
 
-use BobV\EntityHistoryBundle\Configuration\HistoryConfiguration;
-use BobV\EntityHistoryBundle\Exception\IncorrectCriteriaException;
-use BobV\EntityHistoryBundle\Exception\NotFoundException;
-use BobV\EntityHistoryBundle\Exception\NotLoggedException;
-use BobV\EntityHistoryBundle\Exception\TooManyFoundException;
+use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
+use Bobv\EntityHistoryBundle\Exception\IncorrectCriteriaException;
+use Bobv\EntityHistoryBundle\Exception\NotFoundException;
+use Bobv\EntityHistoryBundle\Exception\NotLoggedException;
+use Bobv\EntityHistoryBundle\Exception\TooManyFoundException;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;

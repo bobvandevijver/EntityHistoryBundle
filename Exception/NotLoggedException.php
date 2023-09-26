@@ -1,6 +1,6 @@
 <?php
 
-namespace BobV\EntityHistoryBundle\Exception;
+namespace Bobv\EntityHistoryBundle\Exception;
 
 /**
  * Class NotLoggedException
