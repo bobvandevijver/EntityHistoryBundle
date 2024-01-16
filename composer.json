@@ -12,8 +12,10 @@
     }
   ],
   "require": {
+    "php": ">=8.1",
     "doctrine/orm": "~2.1",
-    "symfony/framework-bundle": ">=2.6|~3.0"
+    "symfony/framework-bundle": ">=2.6",
+    "symfony/security-core": ">=2.6"
   },
   "autoload": {
     "psr-4": {
