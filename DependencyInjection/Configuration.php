@@ -21,13 +21,7 @@ class Configuration implements ConfigurationInterface
   {
     $treeBuilder = new TreeBuilder('bobv_entity_history');
 
-    if (method_exists($treeBuilder, 'getRootNode')) {
-      $rootNode = $treeBuilder->getRootNode();
-    } else {
-      // for symfony/config 4.1 and older
-      $rootNode = $treeBuilder->root('bobv_entity_history');
-    }
-    $rootNode
+    $treeBuilder->getRootNode()
         ->children()
           ->arrayNode('entities')
             ->prototype('scalar')->end()
