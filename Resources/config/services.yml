@@ -8,7 +8,7 @@ parameters:
 services:
   Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration:
     arguments:
-      - "@service_container"
+      - "@Symfony\\Component\\Security\\Core\\Authorization\\AuthorizationCheckerInterface"
     calls:
       - [injectVars, [ "%bobv.entityhistory.table_prefix%", "%bobv.entityhistory.table_suffix%", "%bobv.entityhistory.revision_field_name%", "%bobv.entityhistory.revision_type_field_name%", "%bobv.entityhistory.entities%", "%bobv.entityhistory.deleted_at_field%", "%bobv.entityhistory.deleted_by_field%", "%bobv.entityhistory.deleted_by_method%" ]]
 

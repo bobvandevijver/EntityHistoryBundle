@@ -2,7 +2,7 @@
 
 namespace Bobv\EntityHistoryBundle\Configuration;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
  * Class HistoryConfiguration
@@ -28,22 +28,11 @@ class HistoryConfiguration
   protected $deletedByMethod;
 
   /**
-   * @var ContainerInterface
-   */
-  private $container;
-
-  /**
    * @var array
    */
   private $changes = array();
 
-  /**
-   * HistoryConfiguration constructor.
-   *
-   * @param ContainerInterface $container
-   */
-  public function __construct(ContainerInterface $container) {
-    $this->container = $container;
+  public function __construct(private readonly AuthorizationCheckerInterface $authorizationChecker) {
   }
 
   /**
@@ -140,9 +129,9 @@ class HistoryConfiguration
   public function getDeletedByValue() {
     $method = $this->deletedByMethod;
     try {
-      return $this->container->get('security.authorization_checker')->$method();
+      return $this->authorizationChecker->$method();
     } catch (\Exception $e) {
-      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->container->get('security.authorization_checker'))));
+      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->authorizationChecker)));
     }
   }
 
