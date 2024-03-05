@@ -15,7 +15,7 @@ class HistoryCollection
    */
   public function addRevision(HistoryRevision $revision): self {
     if(!isset($this->revisions[$revision->getEntityId()])){
-      $this->revisions[$revision->getEntityId()] = array();
+      $this->revisions[$revision->getEntityId()] = [];
     }
 
     $this->revisions[$revision->getEntityId()][] = $revision;
@@ -23,7 +23,7 @@ class HistoryCollection
     return $this;
   }
 
-  public function getRevisions($entityId): mixed {
+  public function getRevisions($entityId): array {
     if (isset($this->revisions[$entityId])) {
       return $this->revisions[$entityId];
     }

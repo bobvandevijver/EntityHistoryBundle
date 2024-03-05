@@ -174,7 +174,7 @@ class LogHistorySubscriber implements EventSubscriber
   /**
    * Find the new revision id for the current entity
    */
-  private function getRevisionId(ClassMetadata $class, $entityData, $revType): int|string {
+  private function getRevisionId(ClassMetadata $class, $entityData, $revType): int{
     if ($revType === "INS") {
       return 1;
     }

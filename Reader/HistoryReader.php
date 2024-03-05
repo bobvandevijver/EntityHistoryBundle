@@ -189,7 +189,7 @@ class HistoryReader
     return $this->createEntity($className, $revision, $revId);
   }
 
-  private function getMetadata(string $className): bool|ClassMetadata {
+  private function getMetadata(string $className): false|ClassMetadata {
     if (!$this->config->isLogged($className)) {
       return false;
     }
