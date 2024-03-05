@@ -5,8 +5,6 @@ namespace Bobv\EntityHistoryBundle\Configuration;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
- * Class HistoryConfiguration
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -16,7 +14,6 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
  */
 class HistoryConfiguration
 {
-
   // Configuration variables
   protected $classes;
   protected $prefix;
@@ -26,70 +23,37 @@ class HistoryConfiguration
   protected $deletedAtField;
   protected $deletedByField;
   protected $deletedByMethod;
-
-  /**
-   * @var array
-   */
-  private $changes = array();
+  private array $changes = [];
 
   public function __construct(private readonly AuthorizationCheckerInterface $authorizationChecker) {
   }
 
-  /**
-   * @return mixed
-   */
-  public function getClasses() {
+  public function getClasses(): mixed {
     return $this->classes;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getPrefix() {
+  public function getPrefix(): mixed {
     return $this->prefix;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getRevisionFieldName() {
+  public function getRevisionFieldName(): mixed {
     return $this->revisionFieldName;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getRevisionTypeFieldName() {
+  public function getRevisionTypeFieldName(): mixed {
     return $this->revisionTypeFieldName;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getSuffix() {
+  public function getSuffix(): mixed {
     return $this->suffix;
   }
 
-  /**
-   * @param $class
-   *
-   * @return string
-   */
-  public function getTableName($class) {
+  public function getTableName($class): string {
     return $this->prefix . $class . $this->suffix;
   }
 
-  /**
-   * @param $prefix
-   * @param $suffix
-   * @param $revFieldName
-   * @param $revTypeFieldName
-   * @param $classes
-   * @param $deletedAtField
-   * @param $deletedByField
-   * @param $deletedByMethod
-   */
-  public function injectVars($prefix, $suffix, $revFieldName, $revTypeFieldName, $classes, $deletedAtField, $deletedByField, $deletedByMethod) {
+  public function injectVars($prefix, $suffix, $revFieldName, $revTypeFieldName, $classes, $deletedAtField, $deletedByField, $deletedByMethod): void
+  {
     $this->prefix                = $prefix;
     $this->suffix                = $suffix;
     $this->revisionFieldName     = $revFieldName;
@@ -100,33 +64,19 @@ class HistoryConfiguration
     $this->deletedByMethod       = $deletedByMethod;
   }
 
-  /**
-   * @param $entityName
-   *
-   * @return mixed
-   */
-  public function isLogged($entityName) {
+  public function isLogged($entityName): bool {
     return array_key_exists($entityName, $this->classes);
   }
 
-  /**
-   * @return mixed
-   */
-  public function getDeletedAtField() {
+  public function getDeletedAtField(): mixed {
     return $this->deletedAtField;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getDeletedByField() {
+  public function getDeletedByField(): mixed {
     return $this->deletedByField;
   }
 
-  /**
-   * @return mixed
-   */
-  public function getDeletedByValue() {
+  public function getDeletedByValue(): mixed {
     $method = $this->deletedByMethod;
     try {
       return $this->authorizationChecker->$method();
@@ -135,13 +85,7 @@ class HistoryConfiguration
     }
   }
 
-  /**
-   * @param $className
-   * @param $id
-   *
-   * @return bool
-   */
-  public function isReverted($className, $id) {
+  public function isReverted($className, $id): bool {
     if (isset($this->changes[$className]) && in_array($id, $this->changes[$className])) {
       unset($this->changes[$className][$id]);
       return true;
@@ -150,15 +94,10 @@ class HistoryConfiguration
     return false;
   }
 
-  /**
-   * @param $className
-   * @param $id
-   */
-  public function setReverted($className, $id) {
+  public function setReverted($className, $id): void {
     if (!isset($this->changes[$className])) {
       $this->changes[$className] = [];
     }
     $this->changes[$className][] = $id;
   }
-
 }

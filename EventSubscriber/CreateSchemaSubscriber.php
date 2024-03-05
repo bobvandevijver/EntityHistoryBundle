@@ -9,8 +9,6 @@ use Doctrine\ORM\Tools\Event\GenerateSchemaTableEventArgs;
 use Doctrine\ORM\Tools\ToolEvents;
 
 /**
- * Class CreateSchemaSubscriber
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -20,39 +18,23 @@ use Doctrine\ORM\Tools\ToolEvents;
  */
 class CreateSchemaSubscriber implements EventSubscriber
 {
-
-  /**
-   * @var HistoryConfiguration
-   */
-  private $config;
-
-  /**
-   * @param HistoryConfiguration $configuration
-   */
-  public function __construct(HistoryConfiguration $configuration)
+  public function __construct(private readonly HistoryConfiguration $configuration)
   {
-    $this->config = $configuration;
   }
 
-  /**
-   * @return array
-   */
-  public function getSubscribedEvents()
+  public function getSubscribedEvents(): array
   {
-    return array(
+    return [
         ToolEvents::postGenerateSchemaTable
-    );
+    ];
   }
 
-  /**
-   * @param GenerateSchemaTableEventArgs $eventArgs
-   */
-  public function postGenerateSchemaTable(GenerateSchemaTableEventArgs $eventArgs)
+  public function postGenerateSchemaTable(GenerateSchemaTableEventArgs $eventArgs): void
   {
     $cm = $eventArgs->getClassMetadata();
 
     // Check if the entity is logged
-    if ($this->config->isLogged($cm->getName())) {
+    if ($this->configuration->isLogged($cm->getName())) {
 
       // Get needed vars
       $schema      = $eventArgs->getSchema();
@@ -60,7 +42,7 @@ class CreateSchemaSubscriber implements EventSubscriber
 
       // Create table
       $revisionTable = $schema->createTable(
-          $this->config->getTableName($entityTable->getName())
+          $this->configuration->getTableName($entityTable->getName())
       );
 
       // Get id column (if any)

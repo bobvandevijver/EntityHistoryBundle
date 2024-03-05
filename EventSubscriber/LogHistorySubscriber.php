@@ -5,19 +5,17 @@ namespace Bobv\EntityHistoryBundle\EventSubscriber;
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
 
 /**
- * Class LogHistorySubscriber
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -27,11 +25,6 @@ use Doctrine\ORM\UnitOfWork;
  */
 class LogHistorySubscriber implements EventSubscriber
 {
-
-  /**
-   * @var HistoryConfiguration
-   */
-  private $config;
   /**
    * @var Connection
    */
@@ -53,25 +46,15 @@ class LogHistorySubscriber implements EventSubscriber
    */
   private $uow;
 
-  /**
-   * @param HistoryConfiguration $history
-   */
-  public function __construct(HistoryConfiguration $history) {
-    $this->config = $history;
+  public function __construct(private readonly HistoryConfiguration $config) {
   }
 
-  /**
-   * @return array
-   */
-  public function getSubscribedEvents() {
+  public function getSubscribedEvents(): array {
     return array(Events::onFlush, Events::postPersist, Events::postUpdate);
   }
 
-  /**
-   * @param OnFlushEventArgs $eventArgs
-   */
-  public function onFlush(OnFlushEventArgs $eventArgs) {
-    $this->em       = $eventArgs->getEntityManager();
+  public function onFlush(OnFlushEventArgs $eventArgs): void {
+    $this->em       = $eventArgs->getObjectManager();
     $this->conn     = $this->em->getConnection();
     $this->uow      = $this->em->getUnitOfWork();
     $this->platform = $this->conn->getDatabasePlatform();
@@ -104,12 +87,9 @@ class LogHistorySubscriber implements EventSubscriber
     }
   }
 
-  /**
-   * @param LifecycleEventArgs $eventArgs
-   */
-  public function postPersist(LifecycleEventArgs $eventArgs) {
+  public function postPersist(PostPersistEventArgs $eventArgs): void {
     // onFlush was executed before, everything already initialized
-    $entity = $eventArgs->getEntity();
+    $entity = $eventArgs->getObject();
 
     $class = $this->em->getClassMetadata(get_class($entity));
     if (!$this->config->isLogged($class->name)) {
@@ -119,12 +99,9 @@ class LogHistorySubscriber implements EventSubscriber
     $this->saveRevisionEntityData($class, $this->getOriginalEntityData($entity), 'INS');
   }
 
-  /**
-   * @param LifecycleEventArgs $eventArgs
-   */
-  public function postUpdate(LifecycleEventArgs $eventArgs) {
+  public function postUpdate(PostUpdateEventArgs $eventArgs): void {
     // onFlush was executed before, everything already initialized
-    $entity = $eventArgs->getEntity();
+    $entity = $eventArgs->getObject();
 
     $class = $this->em->getClassMetadata(get_class($entity));
     if (!$this->config->isLogged($class->name)) {
@@ -140,13 +117,7 @@ class LogHistorySubscriber implements EventSubscriber
     }
   }
 
-  /**
-   * @param ClassMetadata $class
-   *
-   * @return string
-   * @throws DBALException
-   */
-  private function getInsertRevisionSQL($class) {
+  private function getInsertRevisionSQL(ClassMetadata $class): string {
     if (!isset($this->insertRevisionSQL[$class->name])) {
       $placeholders = array('?', '?');
       $tableName    = $this->config->getTableName($class->table['name']);
@@ -188,12 +159,8 @@ class LogHistorySubscriber implements EventSubscriber
 
   /**
    * Get original entity data, including versioned field, if "version" constraint is used
-   *
-   * @param mixed $entity
-   *
-   * @return array
    */
-  private function getOriginalEntityData($entity) {
+  private function getOriginalEntityData(mixed $entity): array {
     $class = $this->em->getClassMetadata(get_class($entity));
     $data  = $this->uow->getOriginalEntityData($entity);
     if ($class->isVersioned) {
@@ -206,15 +173,8 @@ class LogHistorySubscriber implements EventSubscriber
 
   /**
    * Find the new revision id for the current entity
-   *
-   * @param ClassMetadata $class
-   * @param               $entityData
-   * @param               $revType
-   *
-   * @return int|string
-   * @throws DBALException
    */
-  private function getRevisionId(ClassMetadata $class, $entityData, $revType) {
+  private function getRevisionId(ClassMetadata $class, $entityData, $revType): int{
     if ($revType === "INS") {
       return 1;
     }
@@ -250,12 +210,7 @@ class LogHistorySubscriber implements EventSubscriber
     }
   }
 
-  /**
-   * @param ClassMetadata $class
-   * @param array         $entityData
-   * @param string        $revType
-   */
-  private function saveRevisionEntityData($class, $entityData, $revType) {
+  private function saveRevisionEntityData(ClassMetadata $class, array $entityData, string $revType): void {
     $params = array($this->getRevisionId($class, $entityData, $revType), $revType);
     $types  = array(\PDO::PARAM_INT, \PDO::PARAM_STR);
 
@@ -292,6 +247,6 @@ class LogHistorySubscriber implements EventSubscriber
       $types[]  = $class->fieldMappings[$field]['type'];
     }
 
-    $this->conn->executeUpdate($this->getInsertRevisionSQL($class), $params, $types);
+    $this->conn->executeStatement($this->getInsertRevisionSQL($class), $params, $types);
   }
 }
