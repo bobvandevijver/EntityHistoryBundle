@@ -8,15 +8,15 @@ use Bobv\EntityHistoryBundle\Exception\NotFoundException;
 use Bobv\EntityHistoryBundle\Exception\NotLoggedException;
 use Bobv\EntityHistoryBundle\Exception\TooManyFoundException;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\PersistentCollection;
+use Doctrine\ORM\Persisters\Entity\EntityPersister;
 
 /**
- * Class HistoryReader
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -26,39 +26,14 @@ use Doctrine\ORM\PersistentCollection;
  */
 class HistoryReader
 {
-  /**
-   * @var HistoryConfiguration
-   */
-  private $config;
+  private array $entityCache = [];
+  private readonly AbstractPlatform $platform;
 
-  /**
-   * @var EntityManager
-   */
-  private $em;
-
-  private $entityCache;
-
-  /**
-   * HistoryReader constructor.
-   *
-   * @param EntityManager        $em
-   * @param HistoryConfiguration $config
-   */
-  public function __construct(EntityManager $em, HistoryConfiguration $config) {
-    $this->em     = $em;
-    $this->config = $config;
-
+  public function __construct(private readonly EntityManager $em, private readonly HistoryConfiguration $config) {
     $this->platform = $this->em->getConnection()->getDatabasePlatform();
   }
 
-  /**
-   * @param string $className
-   * @param int    $id
-   *
-   * @return HistoryCollection
-   * @throws NotLoggedException
-   */
-  public function findRevisions($className, $id) {
+  public function findRevisions(string $className, int $id): HistoryCollection {
     if (false === ($metadata = $this->getMetadata($className))) {
       throw new NotLoggedException($className);
     }
@@ -73,17 +48,7 @@ class HistoryReader
     return $this->createHistoryCollection($className, $revisions);
   }
 
-  /**
-   * @param string $className
-   * @param int    $id
-   * @param int    $revision
-   *
-   * @return HistoryRevision
-   * @throws NotFoundException
-   * @throws NotLoggedException
-   * @throws TooManyFoundException
-   */
-  public function findRevision($className, $id, $revision) {
+  public function findRevision(string $className, int $id, int $revision): HistoryRevision {
     if (false === ($metadata = $this->getMetadata($className))) {
       throw new NotLoggedException($className);
     }
@@ -108,16 +73,7 @@ class HistoryReader
     return $history->getRevisions($id)[0];
   }
 
-  /**
-   * @param string $className
-   * @param array  $criteria
-   *
-   * @return HistoryCollection
-   *
-   * @throws IncorrectCriteriaException
-   * @throws NotLoggedException
-   */
-  public function findRevisionsByCriteria($className, array $criteria) {
+  public function findRevisionsByCriteria(string $className, array $criteria): HistoryCollection {
     if (false === ($metadata = $this->getMetadata($className))) {
       throw new NotLoggedException($className);
     }
@@ -149,17 +105,7 @@ class HistoryReader
     return $this->createHistoryCollection($className, $revisions);
   }
 
-  /**
-   * @param string            $className
-   * @param                   $dbObject
-   * @param HistoryRevision   $revisionData
-   *
-   * @return array
-   *
-   * @throws NotLoggedException
-   * @throws \Exception
-   */
-  public function restoreObject($className, &$dbObject, HistoryRevision $revisionData) {
+  public function restoreObject(string $className, &$dbObject, HistoryRevision $revisionData): void {
     if (false === ($metadata = $this->getMetadata($className))) {
       throw new NotLoggedException($className);
     }
@@ -214,13 +160,7 @@ class HistoryReader
     $this->config->setReverted($className, $dbObject->getId());
   }
 
-  /**
-   * @param string $className
-   * @param array  $revisions
-   *
-   * @return HistoryCollection
-   */
-  private function createHistoryCollection($className, array &$revisions) {
+  private function createHistoryCollection(string $className, array &$revisions): HistoryCollection {
     // Loop the revisions and create object from them
     $historyCollection = new HistoryCollection();
     foreach ($revisions as $revision) {
@@ -239,35 +179,17 @@ class HistoryReader
 
   /**
    * Create an entity from a revision
-   *
-   * @param $className
-   * @param $revision
-   *
-   * @return object
    */
-  private function createObjectFromRevision($className, $revision) {
+  private function createObjectFromRevision($className, $revision): object {
     // Remove revision fields
     $revId = $revision['rev'];
     unset($revision['rev']);
     unset($revision['revtype']);
 
     return $this->createEntity($className, $revision, $revId);
-
-//    // Create the entity, but clear the uow cache to prevent wrong results
-//    $uow    = $this->em->getUnitOfWork();
-//    $object = $uow->createEntity($className, $revision);
-//
-//    // Detach object to prevent cache and return it
-//    $uow->detach($object);
-//    return $object;
   }
 
-  /**
-   * @param string $className
-   *
-   * @return bool|ClassMetadata
-   */
-  private function getMetadata($className) {
+  private function getMetadata(string $className): bool|ClassMetadata {
     if (!$this->config->isLogged($className)) {
       return false;
     }
@@ -277,30 +199,17 @@ class HistoryReader
 
   /**
    * Simplified and stolen code from UnitOfWork::createEntity.
-   *
-   * @param string $className
-   * @param array  $data
-   * @param        $revision
-   *
-   * @throws \Doctrine\DBAL\DBALException
-   * @throws \Doctrine\ORM\Mapping\MappingException
-   * @throws \Doctrine\ORM\ORMException
-   * @throws \Exception
-   * @return object
    */
-  private function createEntity($className, array $data, $revision) {
+  private function createEntity(string $className, array $data, $revision): object {
     /** @var ClassMetadataInfo|ClassMetadata $class */
     $class = $this->em->getClassMetadata($className);
     //lookup revisioned entity cache
-    $keyParts = array();
+    $keyParts = [];
     foreach ($class->getIdentifierFieldNames() as $name) {
       $keyParts[] = $data[$name];
     }
     $key = implode(':', $keyParts);
-    if (isset($this->entityCache[$className]) &&
-        isset($this->entityCache[$className][$key]) &&
-        isset($this->entityCache[$className][$key][$revision])
-    ) {
+    if (isset($this->entityCache[$className][$key][$revision])) {
       return $this->entityCache[$className][$key][$revision];
     }
 
@@ -342,11 +251,11 @@ class HistoryReader
       }
       /** @var ClassMetadataInfo|ClassMetadata $targetClass */
       $targetClass = $this->em->getClassMetadata($assoc['targetEntity']);
-      if ($assoc['type'] & ClassMetadata::TO_ONE) {
+      if ($assoc['type'] & ClassMetadataInfo::TO_ONE) {
         if ($assoc['isOwningSide']) {
           $associatedId = array();
           foreach ($assoc['targetToSourceKeyColumns'] as $targetColumn => $srcColumn) {
-            $joinColumnValue = isset($data[$srcColumn]) ? $data[$srcColumn] : null;
+            $joinColumnValue = $data[$srcColumn] ?? null;
             if ($joinColumnValue !== null) {
               $associatedId[$targetClass->fieldNames[$targetColumn]] = $joinColumnValue;
             }
@@ -363,7 +272,7 @@ class HistoryReader
           $class->reflFields[$field]->setValue($entity, $this->getEntityPersister($assoc['targetEntity'])
               ->loadOneToOneEntity($assoc, $entity));
         }
-      } elseif ($assoc['type'] & ClassMetadata::ONE_TO_MANY) {
+      } elseif ($assoc['type'] & ClassMetadataInfo::ONE_TO_MANY) {
         $collection = new PersistentCollection($this->em, $targetClass, new ArrayCollection());
         $this->getEntityPersister($assoc['targetEntity'])
             ->loadOneToManyCollection($assoc, $entity, $collection);
@@ -377,7 +286,7 @@ class HistoryReader
     return $entity;
   }
 
-  protected function getEntityPersister($entity) {
+  protected function getEntityPersister($entity): EntityPersister {
     $uow = $this->em->getUnitOfWork();
     return $uow->getEntityPersister($entity);
   }

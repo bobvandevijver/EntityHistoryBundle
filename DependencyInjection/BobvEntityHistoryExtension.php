@@ -8,8 +8,6 @@ use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
- * Class BobVEntityHistoryExtension
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
@@ -19,7 +17,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  */
 class BobvEntityHistoryExtension extends Extension
 {
-  public function load(array $configs, ContainerBuilder $container) {
+  public function load(array $configs, ContainerBuilder $container): void {
     $config = $this->processConfiguration(new Configuration(), $configs);
 
     $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));

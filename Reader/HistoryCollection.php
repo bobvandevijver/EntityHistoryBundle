@@ -3,30 +3,17 @@
 namespace Bobv\EntityHistoryBundle\Reader;
 
 /**
- * Class HistoryCollection
  * @author BobV
  */
 class HistoryCollection
 {
-  /** @var array */
-  private $revisions;
-
-  /**
-   * HistoryCollection constructor.
-   */
-  public function __construct() {
-    $this->revisions = array();
-  }
+  private array $revisions = [];
 
   /**
    * Add a revision to the collection. Take care to add them in the correct
    * order, as otherwise you will have to sort them.
-   *
-   * @param HistoryRevision $revision
-   *
-   * @return $this
    */
-  public function addRevision(HistoryRevision $revision) {
+  public function addRevision(HistoryRevision $revision): self {
     if(!isset($this->revisions[$revision->getEntityId()])){
       $this->revisions[$revision->getEntityId()] = array();
     }
@@ -36,35 +23,22 @@ class HistoryCollection
     return $this;
   }
 
-  /**
-   * @param $entityId
-   *
-   * @return array|mixed
-   */
-  public function getRevisions($entityId) {
+  public function getRevisions($entityId): mixed {
     if (isset($this->revisions[$entityId])) {
       return $this->revisions[$entityId];
     }
 
-    return array();
+    return [];
   }
 
-  /**
-   * @return array
-   */
-  public function getAllRevisions() {
+  public function getAllRevisions(): array {
     return $this->revisions;
   }
 
-  /**
-   * @param null $entityId
-   *
-   * @return int
-   */
-  public function getRevisionCount($entityId = null){
+  public function getRevisionCount($entityId = null): int {
     if($entityId === null){
       $count = 0;
-      foreach ($this->revisions as $revisions){
+      foreach ($this->revisions as $revisions) {
         $count += count($revisions);
       }
       return $count;
@@ -75,11 +49,8 @@ class HistoryCollection
 
   /**
    * Returns the amount of different entities in this collection
-   *
-   * @return mixed
    */
-  public function getEntityCount() {
+  public function getEntityCount(): int {
     return count($this->revisions);
   }
-
 }

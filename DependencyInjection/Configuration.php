@@ -6,8 +6,6 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * Class Configuration
- *
  * Based on the work of
  *  SimpleThings\EntityAudit
  *  Benjamin Eberlei <eberlei@simplethings.de>
