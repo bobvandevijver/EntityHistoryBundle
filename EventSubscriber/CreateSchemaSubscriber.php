@@ -56,8 +56,8 @@ class CreateSchemaSubscriber implements EventSubscriber
       }
 
       // Add revision info
-      $revisionTable->addColumn($this->config->getRevisionFieldName(), 'integer');
-      $revisionTable->addColumn($this->config->getRevisionTypeFieldName(), 'string', array('length' => 4));
+      $revisionTable->addColumn($this->configuration->getRevisionFieldName(), 'integer');
+      $revisionTable->addColumn($this->configuration->getRevisionTypeFieldName(), 'string', array('length' => 4));
 
       // Get each column (except id) and add it to the table
       foreach ($entityTable->getColumns() AS $column) {
@@ -71,7 +71,7 @@ class CreateSchemaSubscriber implements EventSubscriber
 
       // Get the primary keys
       $pkColumns   = $entityTable->getPrimaryKey()->getColumns();
-      $pkColumns[] = $this->config->getRevisionFieldName();
+      $pkColumns[] = $this->configuration->getRevisionFieldName();
       $revisionTable->setPrimaryKey($pkColumns);
     }
   }
