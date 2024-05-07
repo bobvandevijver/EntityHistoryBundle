@@ -2,6 +2,8 @@
 
 namespace Bobv\EntityHistoryBundle\DependencyInjection;
 
+use Doctrine\ORM\Events;
+use Doctrine\ORM\Tools\ToolEvents;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader;
@@ -41,9 +43,11 @@ class BobvEntityHistoryExtension extends Extension
     // Create the service tags
     foreach ($config['connections'] as $connection) {
       $container->findDefinition('bobv.entityhistory.create_schema_subscriber')
-          ->addTag('doctrine.event_subscriber', array('connection' => $connection));
+          ->addTag('doctrine.event_listener', ['event' => ToolEvents::postGenerateSchemaTable, 'connection' => $connection]);
       $container->findDefinition('bobv.entityhistory.log_history_subscriber')
-          ->addTag('doctrine.event_subscriber', array('connection' => $connection));
+          ->addTag('doctrine.event_listener', ['event' => Events::onFlush, 'connection' => $connection])
+          ->addTag('doctrine.event_listener', ['event' => Events::postPersist, 'connection' => $connection])
+          ->addTag('doctrine.event_listener', ['event' => Events::postUpdate, 'connection' => $connection]);
     }
 
   }

@@ -3,10 +3,8 @@
 namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
-use Doctrine\Common\EventSubscriber;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\ORM\Tools\Event\GenerateSchemaTableEventArgs;
-use Doctrine\ORM\Tools\ToolEvents;
 
 /**
  * Based on the work of
@@ -16,17 +14,10 @@ use Doctrine\ORM\Tools\ToolEvents;
  *
  * @author BobV
  */
-class CreateSchemaSubscriber implements EventSubscriber
+class CreateSchemaSubscriber
 {
   public function __construct(private readonly HistoryConfiguration $configuration)
   {
-  }
-
-  public function getSubscribedEvents(): array
-  {
-    return [
-        ToolEvents::postGenerateSchemaTable
-    ];
   }
 
   public function postGenerateSchemaTable(GenerateSchemaTableEventArgs $eventArgs): void
