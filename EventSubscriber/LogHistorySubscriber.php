@@ -3,7 +3,6 @@
 namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
-use Doctrine\Common\EventSubscriber;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
@@ -11,7 +10,6 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
-use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
 
@@ -23,7 +21,7 @@ use Doctrine\ORM\UnitOfWork;
  *
  * @author BobV
  */
-class LogHistorySubscriber implements EventSubscriber
+class LogHistorySubscriber
 {
   /**
    * @var Connection
@@ -47,10 +45,6 @@ class LogHistorySubscriber implements EventSubscriber
   private $uow;
 
   public function __construct(private readonly HistoryConfiguration $config) {
-  }
-
-  public function getSubscribedEvents(): array {
-    return array(Events::onFlush, Events::postPersist, Events::postUpdate);
   }
 
   public function onFlush(OnFlushEventArgs $eventArgs): void {
