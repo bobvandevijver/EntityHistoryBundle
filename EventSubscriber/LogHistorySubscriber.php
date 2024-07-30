@@ -3,6 +3,7 @@
 namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
+use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
@@ -12,6 +13,9 @@ use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
+use Doctrine\ORM\Utility\PersisterHelper;
+use LogicException;
+use PDO;
 
 /**
  * Based on the work of
@@ -65,7 +69,7 @@ class LogHistorySubscriber
       // Check if there is a deletedAt field configured which we can set
       if (null !== ($deletedAtField = $this->config->getDeletedAtField())) {
         $deletedAtValue                  = [];
-        $deletedAtValue[$deletedAtField] = new \DateTime();
+        $deletedAtValue[$deletedAtField] = new DateTime();
         $entityData                      = array_merge($entityData, $deletedAtValue);
       }
 
@@ -102,7 +106,7 @@ class LogHistorySubscriber
       return;
     }
 
-    $entityData         = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
+    $entityData = array_merge($this->getOriginalEntityData($entity), $this->uow->getEntityIdentifier($entity));
     // Check if the deleted field was set before, if so, it if and REVERT
     if ($this->config->isReverted($class->name, $entityData['id'])) {
       $this->saveRevisionEntityData($class, $entityData, 'REV');
@@ -113,13 +117,13 @@ class LogHistorySubscriber
 
   private function getInsertRevisionSQL(ClassMetadata $class): string {
     if (!isset($this->insertRevisionSQL[$class->name])) {
-      $placeholders = array('?', '?');
+      $placeholders = ['?', '?'];
       $tableName    = $this->config->getTableName($class->table['name']);
 
       $sql = "INSERT INTO " . $tableName . " (" .
           $this->config->getRevisionFieldName() . ", " . $this->config->getRevisionTypeFieldName();
 
-      $fields = array();
+      $fields = [];
 
       // Find associations and copy the data
       foreach ($class->associationMappings AS $assoc) {
@@ -178,7 +182,7 @@ class LogHistorySubscriber
 
     // Get identifier info and use it in the select query
     $count = 1;
-    $where = " WHERE ";
+    $where = ' WHERE ';
     foreach ($identifiers as $identifier) {
       if ($count > 1) {
         $where .= ' AND ';
@@ -198,17 +202,17 @@ class LogHistorySubscriber
     if ($result->rowCount() == 1) {
       return $result->fetchAssociative()[$this->config->getRevisionFieldName()] + 1;
     } elseif ($result->rowCount() > 1) {
-      throw new \LogicException('Error while selecting new rev number');
+      throw new LogicException('Error while selecting new rev number');
     } else {
       return 1;
     }
   }
 
   private function saveRevisionEntityData(ClassMetadata $class, array $entityData, string $revType): void {
-    $params = array($this->getRevisionId($class, $entityData, $revType), $revType);
-    $types  = array(\PDO::PARAM_INT, \PDO::PARAM_STR);
+    $params = [$this->getRevisionId($class, $entityData, $revType), $revType];
+    $types  = [PDO::PARAM_INT, PDO::PARAM_STR];
 
-    $fields = array();
+    $fields = [];
 
     foreach ($class->associationMappings AS $field => $assoc) {
       if (($assoc['type'] & ClassMetadata::TO_ONE) > 0 && $assoc['isOwningSide']) {
@@ -224,10 +228,10 @@ class LogHistorySubscriber
           $fields[$sourceColumn] = true;
           if ($entityData[$field] === NULL) {
             $params[] = NULL;
-            $types[]  = \PDO::PARAM_STR;
+            $types[]  = PDO::PARAM_STR;
           } else {
             $params[] = $relatedId[$targetClass->fieldNames[$targetColumn]];
-            $types[]  = $targetClass->getTypeOfColumn($targetColumn);
+            $types[]  = PersisterHelper::getTypeOfColumn($targetColumn, $targetClass, $this->em);
           }
         }
       }

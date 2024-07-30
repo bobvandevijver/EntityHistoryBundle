@@ -12,9 +12,9 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\PersistentCollection;
 use Doctrine\ORM\Persisters\Entity\EntityPersister;
+use RuntimeException;
 
 /**
  * Based on the work of
@@ -80,15 +80,15 @@ class HistoryReader
 
     // Check if the given criteria are indeed available in the object
     // and create the actual where query
-    $whereSql = "";
+    $whereSql = '';
     foreach ($criteria as $criterium => $data) {
       if ($whereSql) {
-        $whereSql .= " AND ";
+        $whereSql .= ' AND ';
       }
       if ($metadata->hasField($criterium)) {
-        $whereSql .= "h." . $metadata->getFieldMapping($criterium)['columnName'] . " = ?";
+        $whereSql .= 'h.' . $metadata->getFieldMapping($criterium)['columnName'] . ' = ?';
       } else if ($metadata->hasAssociation($criterium)) {
-        $whereSql .= "h." . $metadata->getAssociationMapping($criterium)['joinColumns'][0]['name'] . " = ?";
+        $whereSql .= 'h.' . $metadata->getAssociationMapping($criterium)['joinColumns'][0]['name'] . ' = ?';
       } else {
         throw new IncorrectCriteriaException($criterium, $className);
       }
@@ -96,7 +96,7 @@ class HistoryReader
 
     // Create the query with the where statement
     $tableName = $this->config->getTableName($metadata->getTableName());
-    $query     = 'SELECT * FROM ' . $tableName . ' h WHERE ' . $whereSql . " ORDER BY h.id DESC";
+    $query     = 'SELECT * FROM ' . $tableName . ' h WHERE ' . $whereSql . ' ORDER BY h.id DESC';
 
     // Execute query
     $revisions = $this->em->getConnection()->fetchAllAssociative($query, array_values($criteria));
@@ -131,7 +131,7 @@ class HistoryReader
       if ($oldValue != $newValue) {
         $metadata->setFieldValue($dbObject, $associationName, $newValue);
         $uow->propertyChanged($dbObject, $associationName, $oldValue, $newValue);
-        $changeset[$associationName] = array($oldValue, $newValue);
+        $changeset[$associationName] = [$oldValue, $newValue];
       }
     }
 
@@ -143,7 +143,7 @@ class HistoryReader
         $oldValue = $metadata->getFieldValue($dbObject, $this->config->getDeletedAtField());
         $metadata->setFieldValue($dbObject, $this->config->getDeletedAtField(), null);
         $uow->propertyChanged($dbObject, $this->config->getDeletedAtField(), $oldValue, null);
-        $changeset[$this->config->getDeletedAtField()] = array($oldValue, null);
+        $changeset[$this->config->getDeletedAtField()] = [$oldValue, null];
       }
 
       // Check if there is a deletedBy field configured which we can clear
@@ -151,7 +151,7 @@ class HistoryReader
         $oldValue = $metadata->getFieldValue($dbObject, $this->config->getDeletedByField());
         $metadata->setFieldValue($dbObject, $this->config->getDeletedByField(), null);
         $uow->propertyChanged($dbObject, $this->config->getDeletedByField(), $oldValue, null);
-        $changeset[$this->config->getDeletedByField()] = array($oldValue, null);
+        $changeset[$this->config->getDeletedByField()] = [$oldValue, null];
       }
     }
 
@@ -201,7 +201,6 @@ class HistoryReader
    * Simplified and stolen code from UnitOfWork::createEntity.
    */
   private function createEntity(string $className, array $data, $revision): object {
-    /** @var ClassMetadataInfo|ClassMetadata $class */
     $class = $this->em->getClassMetadata($className);
     //lookup revisioned entity cache
     $keyParts = [];
@@ -215,22 +214,22 @@ class HistoryReader
 
     if (!$class->isInheritanceTypeNone()) {
       if (!isset($data[$class->discriminatorColumn['name']])) {
-        throw new \RuntimeException('Expecting discriminator value in data set.');
+        throw new RuntimeException('Expecting discriminator value in data set.');
       }
       $discriminator = $data[$class->discriminatorColumn['name']];
       if (!isset($class->discriminatorMap[$discriminator])) {
-        throw new \RuntimeException("No mapping found for [{$discriminator}].");
+        throw new RuntimeException("No mapping found for [{$discriminator}].");
       }
       if ($class->discriminatorValue) {
         $entity = $this->em->getClassMetadata($class->discriminatorMap[$discriminator])->newInstance();
       } else {
         //a complex case when ToOne binding is against AbstractEntity having no discriminator
-        $pk = array();
+        $pk = [];
         foreach ($class->identifier as $field) {
           $pk[$class->getColumnName($field)] = $data[$field];
         }
         //        return $this->find($class->discriminatorMap[$discriminator], $pk, $revision);
-        throw new \RuntimeException("This is not supported");
+        throw new RuntimeException("This is not supported");
       }
     } else {
       $entity = $class->newInstance();
@@ -249,9 +248,8 @@ class HistoryReader
       if (isset($hints['fetched'][$className][$field])) {
         continue;
       }
-      /** @var ClassMetadataInfo|ClassMetadata $targetClass */
       $targetClass = $this->em->getClassMetadata($assoc['targetEntity']);
-      if ($assoc['type'] & ClassMetadataInfo::TO_ONE) {
+      if ($assoc['type'] & ClassMetadata::TO_ONE) {
         if ($assoc['isOwningSide']) {
           $associatedId = array();
           foreach ($assoc['targetToSourceKeyColumns'] as $targetColumn => $srcColumn) {
@@ -272,7 +270,7 @@ class HistoryReader
           $class->reflFields[$field]->setValue($entity, $this->getEntityPersister($assoc['targetEntity'])
               ->loadOneToOneEntity($assoc, $entity));
         }
-      } elseif ($assoc['type'] & ClassMetadataInfo::ONE_TO_MANY) {
+      } elseif ($assoc['type'] & ClassMetadata::ONE_TO_MANY) {
         $collection = new PersistentCollection($this->em, $targetClass, new ArrayCollection());
         $this->getEntityPersister($assoc['targetEntity'])
             ->loadOneToManyCollection($assoc, $entity, $collection);
