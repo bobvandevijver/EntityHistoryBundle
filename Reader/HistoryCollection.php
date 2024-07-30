@@ -14,7 +14,7 @@ class HistoryCollection
    * order, as otherwise you will have to sort them.
    */
   public function addRevision(HistoryRevision $revision): self {
-    if(!isset($this->revisions[$revision->getEntityId()])){
+    if (!isset($this->revisions[$revision->getEntityId()])) {
       $this->revisions[$revision->getEntityId()] = [];
     }
 
@@ -36,7 +36,7 @@ class HistoryCollection
   }
 
   public function getRevisionCount($entityId = null): int {
-    if($entityId === null){
+    if ($entityId === null) {
       $count = 0;
       foreach ($this->revisions as $revisions) {
         $count += count($revisions);

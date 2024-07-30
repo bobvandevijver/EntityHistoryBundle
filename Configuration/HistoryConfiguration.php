@@ -2,6 +2,8 @@
 
 namespace Bobv\EntityHistoryBundle\Configuration;
 
+use Exception;
+use LogicException;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
@@ -80,8 +82,8 @@ class HistoryConfiguration
     $method = $this->deletedByMethod;
     try {
       return $this->authorizationChecker->$method();
-    } catch (\Exception $e) {
-      throw new \LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->authorizationChecker)));
+    } catch (Exception) {
+      throw new LogicException(sprintf('The method "%s" could not be called on "%s" to generate the deleted by value', $method, get_class($this->authorizationChecker)));
     }
   }
 

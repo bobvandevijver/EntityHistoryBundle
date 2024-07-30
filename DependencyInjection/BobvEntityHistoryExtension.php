@@ -25,7 +25,7 @@ class BobvEntityHistoryExtension extends Extension
     $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
     $loader->load('services.yml');
 
-    $configurables = array(
+    $configurables = [
         'table_prefix',
         'table_suffix',
         'revision_field_name',
@@ -34,7 +34,7 @@ class BobvEntityHistoryExtension extends Extension
         'deleted_at_field',
         'deleted_by_field',
         'deleted_by_method',
-    );
+    ];
 
     foreach ($configurables as $key) {
       $container->setParameter("bobv.entityhistory." . $key, $config[$key]);

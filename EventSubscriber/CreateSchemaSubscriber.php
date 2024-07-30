@@ -4,6 +4,7 @@ namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Tools\Event\GenerateSchemaTableEventArgs;
 
 /**
@@ -38,25 +39,23 @@ class CreateSchemaSubscriber
 
       // Get id column (if any)
       if ($entityTable->hasColumn('id')) {
-        /* @var $column Column */
         $column = $entityTable->getColumn('id');
-        $revisionTable->addColumn($column->getName(), $column->getType()->getName(), array_merge(
+        $revisionTable->addColumn($column->getName(), Type::lookupName($column->getType()), array_merge(
             $this->getColumnOptions($column),
-            array('notnull' => false, 'autoincrement' => false)
+            ['notnull' => false, 'autoincrement' => false]
         ));
       }
 
       // Add revision info
       $revisionTable->addColumn($this->configuration->getRevisionFieldName(), 'integer');
-      $revisionTable->addColumn($this->configuration->getRevisionTypeFieldName(), 'string', array('length' => 4));
+      $revisionTable->addColumn($this->configuration->getRevisionTypeFieldName(), 'string', ['length' => 4]);
 
       // Get each column (except id) and add it to the table
       foreach ($entityTable->getColumns() AS $column) {
         if ($column->getName() == 'id') continue;
-        /* @var $column Column */
-        $revisionTable->addColumn($column->getName(), $column->getType()->getName(), array_merge(
+        $revisionTable->addColumn($column->getName(), Type::lookupName($column->getType()), array_merge(
             $this->getColumnOptions($column),
-            array('notnull' => false, 'autoincrement' => false)
+            ['notnull' => false, 'autoincrement' => false]
         ));
       }
 
