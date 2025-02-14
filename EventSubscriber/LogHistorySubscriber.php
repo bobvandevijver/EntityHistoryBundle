@@ -7,6 +7,7 @@ use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostPersistEventArgs;
@@ -15,7 +16,6 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
 use Doctrine\ORM\Utility\PersisterHelper;
 use LogicException;
-use PDO;
 
 /**
  * Based on the work of
@@ -210,7 +210,7 @@ class LogHistorySubscriber
 
   private function saveRevisionEntityData(ClassMetadata $class, array $entityData, string $revType): void {
     $params = [$this->getRevisionId($class, $entityData, $revType), $revType];
-    $types  = [PDO::PARAM_INT, PDO::PARAM_STR];
+    $types  = [Types::INTEGER, Types::STRING];
 
     $fields = [];
 
@@ -228,7 +228,7 @@ class LogHistorySubscriber
           $fields[$sourceColumn] = true;
           if ($entityData[$field] === NULL) {
             $params[] = NULL;
-            $types[]  = PDO::PARAM_STR;
+            $types[]  = Types::STRING;
           } else {
             $params[] = $relatedId[$targetClass->fieldNames[$targetColumn]];
             $types[]  = PersisterHelper::getTypeOfColumn($targetColumn, $targetClass, $this->em);
