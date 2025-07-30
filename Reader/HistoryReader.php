@@ -172,8 +172,6 @@ class HistoryReader
       ));
     }
 
-    $this->em->clear($className);
-
     return $historyCollection;
   }
 
