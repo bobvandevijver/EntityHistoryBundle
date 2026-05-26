@@ -211,10 +211,10 @@ class HistoryReader
     }
 
     if (!$class->isInheritanceTypeNone()) {
-      if (!isset($data[$class->discriminatorColumn['name']])) {
+      if (!isset($data[$class->discriminatorColumn->name])) {
         throw new RuntimeException('Expecting discriminator value in data set.');
       }
-      $discriminator = $data[$class->discriminatorColumn['name']];
+      $discriminator = $data[$class->discriminatorColumn->name];
       if (!isset($class->discriminatorMap[$discriminator])) {
         throw new RuntimeException("No mapping found for [{$discriminator}].");
       }
@@ -236,9 +236,9 @@ class HistoryReader
     $this->entityCache[$className][$key][$revision] = $entity;
     foreach ($data as $field => $value) {
       if (isset($class->fieldMappings[$field])) {
-        $type  = Type::getType($class->fieldMappings[$field]['type']);
+        $type  = Type::getType($class->fieldMappings[$field]->type);
         $value = $type->convertToPHPValue($value, $this->platform);
-        $class->reflFields[$field]->setValue($entity, $value);
+        $class->propertyAccessors[$field]->setValue($entity, $value);
       }
     }
     foreach ($class->associationMappings as $field => $assoc) {
@@ -246,11 +246,11 @@ class HistoryReader
       if (isset($hints['fetched'][$className][$field])) {
         continue;
       }
-      $targetClass = $this->em->getClassMetadata($assoc['targetEntity']);
-      if ($assoc['type'] & ClassMetadata::TO_ONE) {
-        if ($assoc['isOwningSide']) {
+      $targetClass = $this->em->getClassMetadata($assoc->targetEntity);
+      if ($assoc->isToOne()) {
+        if ($assoc->isOwningSide()) {
           $associatedId = array();
-          foreach ($assoc['targetToSourceKeyColumns'] as $targetColumn => $srcColumn) {
+          foreach ($assoc->targetToSourceKeyColumns as $targetColumn => $srcColumn) {
             $joinColumnValue = $data[$srcColumn] ?? null;
             if ($joinColumnValue !== null) {
               $associatedId[$targetClass->fieldNames[$targetColumn]] = $joinColumnValue;
@@ -258,25 +258,25 @@ class HistoryReader
           }
           if (!$associatedId) {
             // Foreign key is NULL
-            $class->reflFields[$field]->setValue($entity, null);
+            $class->propertyAccessors[$field]->setValue($entity, null);
           } else {
             $associatedEntity = $this->em->getReference($targetClass->name, $associatedId);
-            $class->reflFields[$field]->setValue($entity, $associatedEntity);
+            $class->propertyAccessors[$field]->setValue($entity, $associatedEntity);
           }
         } else {
           // Inverse side of x-to-one can never be lazy
-          $class->reflFields[$field]->setValue($entity, $this->getEntityPersister($assoc['targetEntity'])
+          $class->propertyAccessors[$field]->setValue($entity, $this->getEntityPersister($assoc->targetEntity)
               ->loadOneToOneEntity($assoc, $entity));
         }
-      } elseif ($assoc['type'] & ClassMetadata::ONE_TO_MANY) {
+      } elseif ($assoc->isOneToMany()) {
         $collection = new PersistentCollection($this->em, $targetClass, new ArrayCollection());
-        $this->getEntityPersister($assoc['targetEntity'])
+        $this->getEntityPersister($assoc->targetEntity)
             ->loadOneToManyCollection($assoc, $entity, $collection);
-        $class->reflFields[$assoc['fieldName']]->setValue($entity, $collection);
+        $class->propertyAccessors[$assoc->fieldName]->setValue($entity, $collection);
       } else {
         // Inject collection
-        $reflField = $class->reflFields[$field];
-        $reflField->setValue($entity, new ArrayCollection());
+        $propertyAccessor = $class->propertyAccessors[$field];
+        $propertyAccessor->setValue($entity, new ArrayCollection());
       }
     }
     return $entity;
