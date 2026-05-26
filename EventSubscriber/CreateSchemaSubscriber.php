@@ -40,7 +40,7 @@ class CreateSchemaSubscriber
       // Get id column (if any)
       if ($entityTable->hasColumn('id')) {
         $column = $entityTable->getColumn('id');
-        $revisionTable->addColumn($column->getName(), Type::lookupName($column->getType()), array_merge(
+        $revisionTable->addColumn($column->getObjectName()->toString(), Type::lookupName($column->getType()), array_merge(
             $this->getColumnOptions($column),
             ['notnull' => false, 'autoincrement' => false]
         ));
@@ -52,17 +52,16 @@ class CreateSchemaSubscriber
 
       // Get each column (except id) and add it to the table
       foreach ($entityTable->getColumns() AS $column) {
-        if ($column->getName() == 'id') continue;
-        $revisionTable->addColumn($column->getName(), Type::lookupName($column->getType()), array_merge(
+        $columnName = $column->getObjectName()->toString();
+        if ($columnName == 'id') continue;
+        $revisionTable->addColumn($columnName, Type::lookupName($column->getType()), array_merge(
             $this->getColumnOptions($column),
             ['notnull' => false, 'autoincrement' => false]
         ));
       }
 
-      // Get the primary keys
-      $pkColumns   = $entityTable->getPrimaryKey()->getColumns();
-      $pkColumns[] = $this->configuration->getRevisionFieldName();
-      $revisionTable->setPrimaryKey($pkColumns);
+      // Add primary key
+      $revisionTable->addPrimaryKeyConstraint($this->configuration->getRevisionFieldName());
     }
   }
 

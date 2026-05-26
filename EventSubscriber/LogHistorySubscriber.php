@@ -127,8 +127,8 @@ class LogHistorySubscriber
 
       // Find associations and copy the data
       foreach ($class->associationMappings AS $assoc) {
-        if (($assoc['type'] & ClassMetadata::TO_ONE) > 0 && $assoc['isOwningSide']) {
-          foreach ($assoc['targetToSourceKeyColumns'] as $sourceCol) {
+        if ($assoc->isToOne() && $assoc->isOwningSide()) {
+          foreach ($assoc->targetToSourceKeyColumns as $sourceCol) {
             $fields[$sourceCol] = true;
             $sql .= ', ' . $sourceCol;
             $placeholders[] = '?';
@@ -141,10 +141,8 @@ class LogHistorySubscriber
         if (array_key_exists($field, $fields)) {
           continue;
         }
-        $type           = Type::getType($class->fieldMappings[$field]['type']);
-        $placeholders[] = (!empty($class->fieldMappings[$field]['requireSQLConversion']))
-            ? $type->convertToDatabaseValueSQL('?', $this->platform)
-            : '?';
+        $type           = Type::getType($class->fieldMappings[$field]->type);
+        $placeholders[] = $type->convertToDatabaseValueSQL('?', $this->platform);
         $sql .= ', ' . $this->em->getConfiguration()->getQuoteStrategy()->getColumnName($field, $class, $this->platform);
       }
 
@@ -163,7 +161,7 @@ class LogHistorySubscriber
     $data  = $this->uow->getOriginalEntityData($entity);
     if ($class->isVersioned) {
       $versionField        = $class->versionField;
-      $data[$versionField] = $class->reflFields[$versionField]->getValue($entity);
+      $data[$versionField] = $class->propertyAccessors[$versionField]->getValue($entity);
     }
 
     return $data;
@@ -215,16 +213,16 @@ class LogHistorySubscriber
     $fields = [];
 
     foreach ($class->associationMappings AS $field => $assoc) {
-      if (($assoc['type'] & ClassMetadata::TO_ONE) > 0 && $assoc['isOwningSide']) {
+      if ($assoc->isToOne() && $assoc->isOwningSide()) {
 
         $relatedId = NULL;
         if ($entityData[$field] !== NULL) {
           $relatedId = $this->uow->getEntityIdentifier($entityData[$field]);
         }
 
-        $targetClass = $this->em->getClassMetadata($assoc['targetEntity']);
+        $targetClass = $this->em->getClassMetadata($assoc->targetEntity);
 
-        foreach ($assoc['sourceToTargetKeyColumns'] as $sourceColumn => $targetColumn) {
+        foreach ($assoc->sourceToTargetKeyColumns as $sourceColumn => $targetColumn) {
           $fields[$sourceColumn] = true;
           if ($entityData[$field] === NULL) {
             $params[] = NULL;
@@ -242,7 +240,7 @@ class LogHistorySubscriber
         continue;
       }
       $params[] = $entityData[$field];
-      $types[]  = $class->fieldMappings[$field]['type'];
+      $types[]  = $class->fieldMappings[$field]->type;
     }
 
     $this->conn->executeStatement($this->getInsertRevisionSQL($class), $params, $types);
