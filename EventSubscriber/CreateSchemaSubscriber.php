@@ -4,6 +4,8 @@ namespace Bobv\EntityHistoryBundle\EventSubscriber;
 
 use Bobv\EntityHistoryBundle\Configuration\HistoryConfiguration;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
+use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Tools\Event\GenerateSchemaTableEventArgs;
 
@@ -34,7 +36,7 @@ class CreateSchemaSubscriber
 
       // Create table
       $revisionTable = $schema->createTable(
-          $this->configuration->getTableName($entityTable->getName())
+          $this->configuration->getTableName($entityTable->getObjectName()->toString())
       );
 
       // Get id column (if any)
@@ -61,7 +63,15 @@ class CreateSchemaSubscriber
       }
 
       // Add primary key
-      $revisionTable->addPrimaryKeyConstraint($this->configuration->getRevisionFieldName());
+      $revisionTable->addPrimaryKeyConstraint(
+          PrimaryKeyConstraint::editor()
+              ->setColumnNames(
+                  ...array_merge(
+                      $entityTable->getPrimaryKeyConstraint()->getColumnNames(),
+                      [UnqualifiedName::unquoted($this->configuration->getRevisionFieldName())]
+                  )
+              )->create(),
+      );
     }
   }
 
